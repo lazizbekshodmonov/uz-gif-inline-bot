@@ -2,7 +2,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "uz-gif-inline-bot",
   "main": "src/index.ts",
-  "compatibility_date": "2026-05-01",
+  "compatibility_date": "2026-08-11",
+  "preview_urls": false,
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,

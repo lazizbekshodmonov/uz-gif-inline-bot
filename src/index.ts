@@ -282,6 +282,61 @@ function buildBot(): Bot {
   });
 
   // Admin istalganini, oddiy foydalanuvchi faqat o'zinikini o'chiradi
+  b.command("users", async (ctx) => {
+    if (!isAdmin(ctx.from?.id)) return;
+    const { results } = await env.DB.prepare(
+      `SELECT added_by AS id, added_by_name AS ism,
+              COUNT(DISTINCT file_unique_id) AS giflar,
+              COUNT(*) AS nomlar,
+              COALESCE(SUM(uses), 0) AS ishlatilgan,
+              MAX(created_at) AS oxirgi
+       FROM gifs WHERE added_by IS NOT NULL
+       GROUP BY added_by ORDER BY giflar DESC LIMIT 30`
+    ).all<{
+      id: number; ism: string | null; giflar: number;
+      nomlar: number; ishlatilgan: number; oxirgi: number;
+    }>();
+
+    if (!results?.length) return void (await ctx.reply("Hali hech kim GIF qo'shmagan."));
+
+    const kun = 86400;
+    const hozir = Math.floor(Date.now() / 1000);
+    const satrlar = results.map((r) => {
+      const kunOldin = Math.floor((hozir - r.oxirgi) / kun);
+      const vaqt = kunOldin === 0 ? "bugun" : `${kunOldin} kun oldin`;
+      return `${r.ism ?? r.id} — ${r.giflar} gif / ${r.nomlar} nom / ${r.ishlatilgan} marta\n   id: ${r.id}, oxirgi: ${vaqt}`;
+    });
+
+    const bans = await env.DB.prepare("SELECT COUNT(*) AS n FROM bans").first<{ n: number }>();
+    await ctx.reply(
+      `👥 ${results.length} ta foydalanuvchi\n\n` +
+        satrlar.join("\n") +
+        (bans?.n ? `\n\n🚫 Bloklangan: ${bans.n} ta (/bans)` : "")
+    );
+  });
+
+  b.command("bans", async (ctx) => {
+    if (!isAdmin(ctx.from?.id)) return;
+    const { results } = await env.DB.prepare(
+      "SELECT user_id, banned_at FROM bans ORDER BY banned_at DESC LIMIT 50"
+    ).all<{ user_id: number; banned_at: number }>();
+
+    if (!results?.length) return void (await ctx.reply("Bloklanganlar yo'q."));
+    await ctx.reply(
+      "🚫 Bloklanganlar:\n" +
+        results.map((r) => `${r.user_id}`).join("\n") +
+        "\n\nBlokdan chiqarish: /unban <id>"
+    );
+  });
+
+  b.command("unban", async (ctx) => {
+    if (!isAdmin(ctx.from?.id)) return;
+    const arg = ctx.match.trim();
+    if (!/^\d+$/.test(arg)) return void (await ctx.reply("Format: /unban 123456789"));
+    const res = await env.DB.prepare("DELETE FROM bans WHERE user_id = ?").bind(Number(arg)).run();
+    await ctx.reply(res.meta.changes ? "✅ Blokdan chiqarildi." : "Bunday blok topilmadi.");
+  });
+
   b.command("del", async (ctx) => {
     const arg = ctx.match.trim();
     if (!/^\d+$/.test(arg)) return void (await ctx.reply("Format: /del 12"));

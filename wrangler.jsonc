@@ -7,9 +7,8 @@
     "enabled": true
   },
   "vars": {
-    // O'z Telegram ID'ingizni yozing (@userinfobot dan olasiz).
-    // Bir nechtasini vergul bilan: "111,222"
-    "ADMINS": "123456789"
+    // Admin Telegram ID'lari. Bir nechtasini vergul bilan: "111,222"
+    "ADMINS": "1203493326"
   },
   "d1_databases": [
     {

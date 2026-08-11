@@ -160,6 +160,8 @@ async function addedToday(userId: number): Promise<number> {
 /** Yangi GIF haqida adminlarga xabar + moderatsiya tugmalari. */
 async function notifyAdmins(fileId: string, uniqueId: string, titles: string[], user: { id: number; name: string }) {
   const kb = new InlineKeyboard()
+    .text("✅ Qabul qilish", "ok")
+    .row()
     .text("🗑 O'chirish", `rm:${uniqueId}`)
     .text("🚫 Ban", `ban:${user.id}`);
 
@@ -350,12 +352,28 @@ function buildBot(): Bot {
 
     const [action, value] = ctx.callbackQuery.data.split(":");
 
+    // Qabul qilish: GIF bazada qoladi, xabar chatdan o'chadi
+    if (action === "ok") {
+      await ctx.answerCallbackQuery("✅ Qabul qilindi");
+      try {
+        await ctx.deleteMessage();
+      } catch {
+        // 48 soatdan eski xabarni bot o'chira olmaydi
+        await ctx.editMessageCaption({ caption: "✅ Qabul qilindi" });
+      }
+      return;
+    }
+
     if (action === "rm") {
       const res = await env.DB.prepare("DELETE FROM gifs WHERE file_unique_id = ?")
         .bind(value)
         .run();
       await ctx.answerCallbackQuery(`${res.meta.changes} ta yozuv o'chirildi`);
-      await ctx.editMessageCaption({ caption: "🗑 O'chirildi" });
+      try {
+        await ctx.deleteMessage();
+      } catch {
+        await ctx.editMessageCaption({ caption: "🗑 O'chirildi" });
+      }
       return;
     }
 

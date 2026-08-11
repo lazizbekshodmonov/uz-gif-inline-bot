@@ -1,0 +1,14 @@
+node_modules/
+.wrangler/
+
+# Lokal maxfiy kalitlar — HECH QACHON commit qilinmasin
+.dev.vars
+.env
+*.local
+
+# Baza zaxiralari
+backup.sql
+*.sql.bak
+
+.DS_Store
+*.log

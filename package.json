@@ -1,0 +1,22 @@
+{
+  "name": "gif-bot",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create gifs",
+    "db:init": "wrangler d1 execute gifs --remote --file=./schema.sql",
+    "db:init:local": "wrangler d1 execute gifs --local --file=./schema.sql",
+    "db:backup": "wrangler d1 export gifs --remote --output=./backup.sql",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "grammy": "^1.30.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^4.0.0"
+  }
+}

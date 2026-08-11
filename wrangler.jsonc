@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gif-bot",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-01",
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // O'z Telegram ID'ingizni yozing (@userinfobot dan olasiz).
+    // Bir nechtasini vergul bilan: "111,222"
+    "ADMINS": "123456789"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gifs",
+      // `wrangler d1 create gifs` buyrug'i bergan UUID'ni shu yerga qo'ying
+      "database_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    }
+  ]
+  // BOT_TOKEN va WEBHOOK_SECRET bu yerga YOZILMAYDI — ular secret:
+  //   wrangler secret put BOT_TOKEN
+  //   wrangler secret put WEBHOOK_SECRET
+}

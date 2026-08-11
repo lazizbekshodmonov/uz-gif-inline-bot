@@ -1,9 +1,14 @@
 # uz-gif-inline-bot
 
+[![Bot](https://img.shields.io/badge/Telegram-%40gifizlabot-2AABEE?logo=telegram&logoColor=white)](https://t.me/gifizlabot)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 O'zbekcha harakat nomlari bo'yicha GIF izlaydigan inline Telegram bot.
 Cloudflare Workers + D1 ustida ishlaydi — bepul rejada, uxlab qolmasdan.
 
-Istalgan chatda `@bot_username yiqilmoq` deb yozasiz va kerakli GIF chiqadi.
+**Ishlab turgan bot:** [@gifizlabot](https://t.me/gifizlabot)
+
+Istalgan chatda `@gifizlabot yiqilmoq` deb yozasiz va kerakli GIF chiqadi.
 Bot guruhga qo'shilishi shart emas.
 
 ## Imkoniyatlar
@@ -76,6 +81,17 @@ curl "https://api.telegram.org/bot<TOKEN>/setWebhook" \
 > va statistika ishlamaydi.
 
 Tekshirish: `https://api.telegram.org/bot<TOKEN>/getWebhookInfo`
+
+## Env qiymatlari
+
+| Nom | Turi | Qayerda | Repoga tushadimi |
+|-----|------|---------|------------------|
+| `BOT_TOKEN` | secret | Cloudflare Secrets | ❌ |
+| `WEBHOOK_SECRET` | secret | Cloudflare Secrets | ❌ |
+| `ADMINS` | var | `wrangler.jsonc` | ✅ |
+| `DB` | binding | `wrangler.jsonc` | ✅ |
+
+Lokal sinov uchun `.dev.vars.example` ni `.dev.vars` deb nusxalang.
 
 ## Buyruqlar
 

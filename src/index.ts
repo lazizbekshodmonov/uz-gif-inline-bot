@@ -1,11 +1,12 @@
 import { Bot, InlineKeyboard, webhookCallback } from "grammy";
-import type { InlineQueryResultCachedGif } from "grammy/types";
+import type { InlineQueryResult } from "grammy/types";
 
 export interface Env {
   DB: D1Database;
   BOT_TOKEN: string;      // wrangler secret put BOT_TOKEN
   WEBHOOK_SECRET: string; // wrangler secret put WEBHOOK_SECRET
   ADMINS: string;         // vars: "123456789,987654321"
+  RESULT_STYLE?: string;  // "list" = nomlar bilan ro'yxat, "grid" = to'r
 }
 
 const PAGE_SIZE = 40;        // Telegram bir so'rovga maks 50 ta natija oladi
@@ -45,7 +46,12 @@ interface GifRow {
   id: number;
   file_id: string;
   title: string;
+  names: string | null; // shu GIF'ning barcha nomlari, vergul bilan
 }
+
+const NAMES_SUBQUERY =
+  "(SELECT GROUP_CONCAT(t.title, ', ') FROM gifs t " +
+  "WHERE t.file_unique_id = g.file_unique_id AND t.status = 'ok') AS names";
 
 /**
  * Bitta GIF bir nechta nom bilan turgani uchun natijalarda takrorlanishi
@@ -57,11 +63,11 @@ async function searchGifs(db: D1Database, query: string, offset: number): Promis
   if (words.length === 0) {
     const { results } = await db
       .prepare(
-        `SELECT id, file_id, title FROM gifs
-         WHERE status = 'ok' AND id IN (
+        `SELECT g.id, g.file_id, g.title, ${NAMES_SUBQUERY} FROM gifs g
+         WHERE g.status = 'ok' AND g.id IN (
            SELECT MIN(id) FROM gifs WHERE status = 'ok' GROUP BY file_unique_id
          )
-         ORDER BY uses DESC, id DESC LIMIT ? OFFSET ?`
+         ORDER BY g.uses DESC, g.id DESC LIMIT ? OFFSET ?`
       )
       .bind(PAGE_SIZE, offset)
       .all<GifRow>();
@@ -71,12 +77,12 @@ async function searchGifs(db: D1Database, query: string, offset: number): Promis
   const cond = words.map(() => "search_key LIKE ?").join(" AND ");
   const { results } = await db
     .prepare(
-      `SELECT id, file_id, title FROM gifs
-       WHERE status = 'ok' AND id IN (
+      `SELECT g.id, g.file_id, g.title, ${NAMES_SUBQUERY} FROM gifs g
+       WHERE g.status = 'ok' AND g.id IN (
          SELECT MIN(id) FROM gifs WHERE status = 'ok' AND ${cond}
          GROUP BY file_unique_id
        )
-       ORDER BY uses DESC, id DESC LIMIT ? OFFSET ?`
+       ORDER BY g.uses DESC, g.id DESC LIMIT ? OFFSET ?`
     )
     .bind(...words.map((w) => `%${w}%`), PAGE_SIZE, offset)
     .all<GifRow>();
@@ -188,12 +194,27 @@ function buildBot(): Bot {
     const offset = /^\d+$/.test(raw) ? parseInt(raw, 10) : 0;
     const rows = await searchGifs(env.DB, ctx.inlineQuery.query, offset);
 
-    const results: InlineQueryResultCachedGif[] = rows.map((r) => ({
-      type: "gif",
-      id: String(r.id),
-      gif_file_id: r.file_id,
-      title: r.title,
-    }));
+    // "list" -> document turi: Telegram ro'yxat ko'rinishida chizadi va
+    // sarlavha bilan tavsifni ko'rsatadi.
+    // "grid"  -> gif turi: klassik media to'ri, nom ko'rinmaydi.
+    const listStyle = (env.RESULT_STYLE ?? "list") === "list";
+
+    const results: InlineQueryResult[] = rows.map((r) =>
+      listStyle
+        ? {
+            type: "document",
+            id: String(r.id),
+            document_file_id: r.file_id,
+            title: r.title,
+            description: r.names && r.names !== r.title ? r.names : undefined,
+          }
+        : {
+            type: "gif",
+            id: String(r.id),
+            gif_file_id: r.file_id,
+            title: r.title,
+          }
+    );
 
     await ctx.answerInlineQuery(results, {
       cache_time: 10,

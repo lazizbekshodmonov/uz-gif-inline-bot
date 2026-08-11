@@ -21,7 +21,9 @@
   },
   "vars": {
     // Admin Telegram ID'lari. Bir nechtasini vergul bilan: "111,222"
-    "ADMINS": "1203493326"
+    "ADMINS": "1203493326",
+    // "list" — nomlar ko'rinadigan ro'yxat, "grid" — klassik media to'ri
+    "RESULT_STYLE": "list"
   },
   "d1_databases": [
     {

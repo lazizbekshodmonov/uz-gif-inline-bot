@@ -26,8 +26,7 @@
     {
       "binding": "DB",
       "database_name": "gifs",
-      // `wrangler d1 create gifs` buyrug'i bergan UUID'ni shu yerga qo'ying
-      "database_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+      "database_id": "45601ba9-48cb-4b6c-bf8f-87c65eb865b7"
     }
   ]
   // BOT_TOKEN va WEBHOOK_SECRET bu yerga YOZILMAYDI — ular secret:

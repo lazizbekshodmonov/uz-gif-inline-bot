@@ -383,20 +383,38 @@ function buildBot(): Bot {
 export default {
   async fetch(request: Request, workerEnv: Env): Promise<Response> {
     env = workerEnv;
-    if (!bot) bot = buildBot();
 
+    // Diagnostika: bot qurilishidan OLDIN javob beramiz, aks holda
+    // BOT_TOKEN yo'q bo'lsa grammY istisno tashlaydi va 1101 chiqadi.
     if (request.method !== "POST") {
-      return new Response("gif-bot ishlayapti", { status: 200 });
+      const status = {
+        BOT_TOKEN: env.BOT_TOKEN ? "bor" : "YO'Q",
+        WEBHOOK_SECRET: env.WEBHOOK_SECRET ? "bor" : "YO'Q",
+        ADMINS: env.ADMINS || "YO'Q",
+        DB: env.DB ? "ulangan" : "YO'Q",
+      };
+      const hammasi = !!(env.BOT_TOKEN && env.WEBHOOK_SECRET && env.DB);
+      return new Response(
+        (hammasi ? "gif-bot ishlayapti\n\n" : "SOZLAMA TO'LIQ EMAS\n\n") +
+          JSON.stringify(status, null, 2),
+        { status: 200, headers: { "content-type": "text/plain; charset=utf-8" } }
+      );
     }
 
-    const handle = webhookCallback(bot, "cloudflare-mod", {
-      secretToken: env.WEBHOOK_SECRET,
-    });
+    if (!env.BOT_TOKEN) {
+      console.error("BOT_TOKEN secret o'rnatilmagan");
+      return new Response("ok", { status: 200 });
+    }
 
     try {
+      if (!bot) bot = buildBot();
+      const handle = webhookCallback(bot, "cloudflare-mod", {
+        secretToken: env.WEBHOOK_SECRET,
+      });
       return await handle(request);
     } catch (err) {
-      console.error(err);
+      // Telegram 200 olmasa, update'ni qayta-qayta yuboraveradi.
+      console.error("Worker xatosi:", err instanceof Error ? err.stack : err);
       return new Response("ok", { status: 200 });
     }
   },
